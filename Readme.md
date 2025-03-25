@@ -12,6 +12,7 @@ This is a Node JS based user login, register and chat service. It uses Express J
 - Delete Message
 - Message History
 - User Logs
+- Social Login with Google
 
 ## Tech Stack
 
@@ -21,6 +22,7 @@ This is a Node JS based user login, register and chat service. It uses Express J
 - MySQL
 - JWT
 - Bcrypt
+- Google APIs (for social login)
 
 ## Installation
 
@@ -52,6 +54,11 @@ This is a Node JS based user login, register and chat service. It uses Express J
 - **GET /logs**: Get the logs of a user
   - Request Query: `startTime`, `endTime`
   - Response: `logs` (array of logs)
+- **GET /google-auth-url**: Get the Google auth URL
+  - Response: `url` (Google auth URL)
+- **GET /login-callback**: Handle Google auth callback
+  - Request Query: `code`
+  - Response: `token`, `userData` (user details without password)
 
 ## Environment Variables
 
@@ -61,7 +68,11 @@ This is a Node JS based user login, register and chat service. It uses Express J
 - `DATABASE_URL`: The connection string for the PostgreSQL database
 - `DEFINE_DURATION`: Maximun limit of Request in Particular Duration
 - `MAX_REQUEST`: No of Requests in Defined Duration
+- `GOOGLE_CLIENT_ID`: The client ID for Google OAuth
+- `GOOGLE_CLIENT_SECRET`: The client secret for Google OAuth
+- `GOOGLE_REDIRECT_URI`: The redirect URI for Google OAuth
 
 ## Author
 
 - Parth
+

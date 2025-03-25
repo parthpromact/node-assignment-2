@@ -1,5 +1,5 @@
 import express from 'express';
-import { getUsers, login, register } from '../Controller/UserController.js';
+import { getGoogleAuthUrl, getUsers, handleGoogleCallback, login, register } from '../Controller/UserController.js';
 import { tokenChecker } from '../middleware/tokenChecker.js';
 import { deleteMessage, editMessage, retrieveConversationHistory, sendMessage } from '../Controller/MessageController.js';
 import { requestLogger } from '../middleware/requestLogger.js';
@@ -30,5 +30,11 @@ router.get('/messages', tokenChecker, requestLogger, retrieveConversationHistory
 
 // Fetch Logs
 router.get('/logs', tokenChecker, requestLogger, fetchLogs);
+
+// Get Google Auth URL
+router.get('/google-auth-url', getGoogleAuthUrl);
+
+// Handle google callback
+router.get('/login-callback', handleGoogleCallback);
 
 export default router;

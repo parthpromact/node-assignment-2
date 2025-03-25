@@ -4,8 +4,14 @@ import helmet from 'helmet';
 import cors from 'cors';
 import Routes from './routes/index.js'; 
 import rateLimit from 'express-rate-limit';
+import http from 'http';
+import socketHandler from './utils/Socket.js';
 
 const app = express();
+const server = http.createServer(app)
+
+// Socket IO Handler
+const io = socketHandler(server);
 
 // Parse the request body as JSON and URL encoded.
 app.use(express.json());
@@ -40,7 +46,7 @@ app.use('/api', Routes);
 const PORT = process.env.PORT || 3000;
 
 // Start serve on Specified Port
-app.listen(PORT, () => {
+server.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);
 });
 

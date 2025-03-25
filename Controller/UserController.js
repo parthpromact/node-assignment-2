@@ -5,6 +5,7 @@ import httpResponse from "../utils/response.js";
 import { loginSchema, registerSchema } from "../utils/Validator.js";
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
+import { google } from 'googleapis';
 
 export const register = async (req, res) => {
   try {
@@ -127,3 +128,120 @@ export const getUsers = async (req, res) => {
         return httpResponse(res, 500, "Internal Server Error");
     }
 }
+
+const oauth2Client = new google.auth.OAuth2(
+  process.env.GOOGLE_CLIENT_ID,     
+  process.env.GOOGLE_CLIENT_SECRET, 
+  process.env.GOOGLE_REDIRECT_URI 
+);
+
+export const getGoogleAuthUrl = (req, res) => {
+  try {
+    // Generate the authorization URL with precise parameters
+    const url = oauth2Client.generateAuthUrl({
+      access_type: 'offline',     
+      prompt: 'consent',          
+      scope: [
+        'https://www.googleapis.com/auth/userinfo.profile',
+        'https://www.googleapis.com/auth/userinfo.email',
+        'openid'                  
+      ],
+      response_type: 'code',
+      state: crypto.randomUUID() 
+    });
+
+    return httpResponse(res, 200, "Google Auth URL generated", { 
+      authUrl: url 
+    });
+  } catch (error) {
+    console.error('Error generating Google Auth URL:', error);
+    return httpResponse(res, 500, "Error generating authentication URL", { 
+      errorDetails: error.message 
+    });
+  }
+};
+
+export const handleGoogleCallback = async (req, res) => {
+  try {
+    const { code } = req.query;
+    console.log("🚀 ~ handleGoogleCallback ~ code:", code)
+
+    // Create OAuth2 client with EXACT same redirect URI
+    const oauth2Client = new google.auth.OAuth2(
+      process.env.GOOGLE_CLIENT_ID,
+      process.env.GOOGLE_CLIENT_SECRET,
+      process.env.GOOGLE_REDIRECT_URI
+    );
+
+    // Exchange authorization code for tokens
+    const { tokens } = await oauth2Client.getToken(code);
+    
+    console.log("🚀 ~ handleGoogleCallback ~ tokens:", tokens)
+    // Verify the token
+    const ticket = await oauth2Client.verifyIdToken({
+      idToken: tokens.id_token,
+      audience: process.env.GOOGLE_CLIENT_ID
+    });
+    console.log("🚀 ~ handleGoogleCallback ~ ticket:", ticket)
+
+    // Get the payload from the verified token
+    const payload = ticket.getPayload();
+    const { 
+      email, 
+      name, 
+      sub: googleId, 
+      email_verified: emailVerified 
+    } = payload;
+    console.log("🚀 ~ handleGoogleCallback ~ payload:", payload)
+
+    // Verify email
+    if (!email || !emailVerified) {
+      return httpResponse(res, 400, "Invalid Google authentication");
+    }
+
+    // Your existing user creation/login logic
+    let existingUser = await getUserByEmail(email);
+    console.log("🚀 ~ handleGoogleCallback ~ existingUser:", existingUser)
+
+    if (!Object.keys(existingUser).length || !existingUser) {
+      existingUser = await createUser({
+        email,
+        name,
+        googleId
+      });
+    } else {
+      existingUser = await updateUser({
+        email,
+        name,
+        googleId
+      }, existingUser.id);
+     
+    }
+
+    // Generate JWT token
+    const token = jwt.sign(
+      { 
+        userData: {
+          userId: existingUser.id,
+          email: existingUser.email,
+          name: existingUser.name
+        }
+      },
+      process.env.JWT_SECRET,
+      { expiresIn: process.env.JWT_EXPIRES_IN }
+    );
+    console.log("🚀 ~ handleGoogleCallback ~ token:", token)
+
+    // Redirect with token
+    return res.redirect(`http://localhost:3000/oauth2callback?token=${encodeURIComponent(token)}`);
+
+  } catch (error) {
+    console.error('Google Callback Error:', error);
+    return res.redirect(`http://localhost:3000/login?error=${encodeURIComponent(error.message)}`);
+  }
+};
+
+
+
+
+
