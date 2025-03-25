@@ -1,0 +1,13 @@
+// Files and Directories to Ignore
+node_modules
+npm-debug.log
+
+// Env Variable Files
+.env
+.env.local
+.env.development
+
+// Build Files
+.DS_Store
+dist
+build

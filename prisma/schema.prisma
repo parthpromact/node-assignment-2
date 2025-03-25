@@ -1,0 +1,58 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+
+
+model Users {
+  id          Int     @id @default(autoincrement())
+  name        String
+  email       String  @unique
+  password    String
+  token       String?
+  createdAt   DateTime? @default(now())   
+  sendermessage  ChatMessages[] @relation("SenderMessage")      // Foreign Key- Sender Message 
+  receivermessage ChatMessages[] @relation("ReceiverMessage")   // Foreign Key- Receiver Message
+  logs        Logs[] @relation("Log")
+}
+
+model ChatMessages {
+  id          Int     @id @default(autoincrement())
+  senderId    Int     
+  receiverId  Int   
+  content     String
+  createdAt   DateTime? @default(now())
+  updatedAt   DateTime? @updatedAt
+  deletedAt   DateTime?
+  isDeleted   Boolean   @default(false)
+  sender      Users     @relation("SenderMessage", fields: [senderId], references: [id])  
+  receiver    Users     @relation("ReceiverMessage", fields: [receiverId], references: [id]) 
+}
+
+model Logs {
+  id          Int     @id @default(autoincrement())
+  ip          String
+  body        Json    @db.Json
+  route       String
+  method      String?
+  timeofcall  DateTime? 
+  username    String?
+  userId      Int?
+  user        Users?    @relation("Log", fields: [userId], references: [id]) 
+}
+
+
+
+
+
