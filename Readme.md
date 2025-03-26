@@ -1,6 +1,6 @@
 # Node JS User Login, Register and Chat Service
 
-This is a Node JS based user login, register and chat service. It uses Express JS as the web framework and Prisma as the ORM tool.
+This is a Node JS based user login, register and chat service. It uses Express JS as the web framework and Prisma as the ORM tool. It also uses Socket.IO for real-time messaging.
 
 ## Features
 
@@ -13,6 +13,8 @@ This is a Node JS based user login, register and chat service. It uses Express J
 - Message History
 - User Logs
 - Social Login with Google
+- Real-time messaging with Socket.IO
+- Search Message
 
 ## Tech Stack
 
@@ -23,6 +25,7 @@ This is a Node JS based user login, register and chat service. It uses Express J
 - JWT
 - Bcrypt
 - Google APIs (for social login)
+- Socket.IO (for real-time messaging)
 
 ## Installation
 
@@ -45,6 +48,9 @@ This is a Node JS based user login, register and chat service. It uses Express J
   - Response: `messageId`
 - **GET /messages**: Get the conversation history between two users
   - Request Query: `receiverId`
+  - Response: `messages` (array of messages)
+- **GET /conversation/search**: Search messages
+  - Request Query: `receiverId`, `message`
   - Response: `messages` (array of messages)
 - **PUT /messages/:messageId**: Edit a message
   - Request Body: `content`
