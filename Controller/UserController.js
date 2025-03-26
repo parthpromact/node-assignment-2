@@ -1,5 +1,5 @@
 
-import { createUser, getUserByEmail } from "../services/user.js";
+import { createUser, getUserByEmail, updateUser } from "../services/user.js";
 import { prisma } from "../utils/PrismaClient.js";
 import httpResponse from "../utils/response.js";
 import { loginSchema, registerSchema } from "../utils/Validator.js";
@@ -164,7 +164,8 @@ export const getGoogleAuthUrl = (req, res) => {
 export const handleGoogleCallback = async (req, res) => {
   try {
     const { code } = req.query;
-    console.log("🚀 ~ handleGoogleCallback ~ code:", code)
+    // If you want to Test this api then uncomment this
+    // return httpResponse(res, 200, "Code Received", { code });
 
     // Create OAuth2 client with EXACT same redirect URI
     const oauth2Client = new google.auth.OAuth2(
@@ -175,14 +176,11 @@ export const handleGoogleCallback = async (req, res) => {
 
     // Exchange authorization code for tokens
     const { tokens } = await oauth2Client.getToken(code);
-    
-    console.log("🚀 ~ handleGoogleCallback ~ tokens:", tokens)
     // Verify the token
     const ticket = await oauth2Client.verifyIdToken({
       idToken: tokens.id_token,
       audience: process.env.GOOGLE_CLIENT_ID
     });
-    console.log("🚀 ~ handleGoogleCallback ~ ticket:", ticket)
 
     // Get the payload from the verified token
     const payload = ticket.getPayload();
@@ -192,7 +190,6 @@ export const handleGoogleCallback = async (req, res) => {
       sub: googleId, 
       email_verified: emailVerified 
     } = payload;
-    console.log("🚀 ~ handleGoogleCallback ~ payload:", payload)
 
     // Verify email
     if (!email || !emailVerified) {
@@ -201,7 +198,6 @@ export const handleGoogleCallback = async (req, res) => {
 
     // Your existing user creation/login logic
     let existingUser = await getUserByEmail(email);
-    console.log("🚀 ~ handleGoogleCallback ~ existingUser:", existingUser)
 
     if (!Object.keys(existingUser).length || !existingUser) {
       existingUser = await createUser({
@@ -230,8 +226,6 @@ export const handleGoogleCallback = async (req, res) => {
       process.env.JWT_SECRET,
       { expiresIn: process.env.JWT_EXPIRES_IN }
     );
-    console.log("🚀 ~ handleGoogleCallback ~ token:", token)
-
     // Redirect with token
     return res.redirect(`http://localhost:3000/oauth2callback?token=${encodeURIComponent(token)}`);
 

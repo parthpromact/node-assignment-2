@@ -36,3 +36,21 @@ export const getUserById = async (id) => {
     throw error;
   }
 };
+
+export const updateUser = async (data, id) => {
+  try {
+    const user = await prisma.users.update({
+      data: {
+        email: data?.email,
+        name: data?.name,
+        password: data?.password,
+        googleId: data?.googleId
+      },
+      where: { id: id },
+    });
+    
+    return user;
+  } catch (error) {
+    throw error;
+  }
+};

@@ -49,3 +49,12 @@ export const historySchema = zod.object({
     endTime: zod.date().optional(),
   });
   
+
+// Search Message Schema
+export const searchMessageSchema = zod.object({
+    message: zod.string().min(1).optional(),
+    receiverId: zod.number().int(),
+    page: zod.number().int().min(1).optional(),
+    count: zod.number().int().min(1).max(100).optional(),
+    sort: zod.enum(['asc', 'desc']).optional(),
+  });

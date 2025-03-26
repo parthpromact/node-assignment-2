@@ -5,7 +5,7 @@ let onlineUsers = {};
 const socketHandler = (server) => {
   const io = new Server(server, {
     cors: {
-      origin: "http://localhost:3000",
+      origin: "*",
       methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
       allowedHeaders: ["Content-type"],
       credentials: true,
@@ -20,11 +20,7 @@ const socketHandler = (server) => {
 
     socket.on("send-msg", (msg) => {
       console.log("Online User", onlineUsers);
-      const { 
-        senderId, 
-        receiverId, 
-        content 
-        } = msg;
+      const { senderId, receiverId, content } = msg;
       const receiverSocketId = onlineUsers[receiverId];
       if (receiverSocketId) {
         io.to(receiverSocketId).emit("receive-msg", {
@@ -37,7 +33,7 @@ const socketHandler = (server) => {
 
     socket.on("disconnect", () => {
       for (const userId in onlineUsers) {
-        if (onlineUsers[userId] === socket.id) {
+        if (onlineUsers[userId] == socket.id) {
           delete onlineUsers[userId];
           break;
         }

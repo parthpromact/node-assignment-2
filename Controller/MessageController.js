@@ -2,7 +2,7 @@ import { createMessage, deleteMessageOfSender, editMessageOfSender, findMessageB
 import { getUserById } from "../services/user.js";
 import { prisma } from "../utils/PrismaClient.js";
 import httpResponse from "../utils/response.js";
-import { editMessageSchema, historySchema, messageSchema } from "../utils/Validator.js";
+import { editMessageSchema, historySchema, messageSchema, searchMessageSchema } from "../utils/Validator.js";
 
 export const sendMessage = async (req, res) => {
   try {
@@ -147,6 +147,18 @@ export const retrieveConversationHistory = async (req, res) => {
           // createdAt: { lte: beforeTimeFormat },
           isDeleted: false
         },
+        include: {
+          sender: {
+            select: {
+              name: true
+            }
+          },
+          receiver: {
+            select: {
+              name: true
+            }
+          }
+        },
         orderBy: {
           createdAt: sort,
         },
@@ -158,7 +170,7 @@ export const retrieveConversationHistory = async (req, res) => {
           senderId: { in: [userId, receiverId] },
           receiverId: { in: [userId, receiverId] },
           // createdAt: { lte: beforeTimeFormat },
-          isDeleted: false
+          isDeleted: false,
         },
       });
 
@@ -177,6 +189,84 @@ export const retrieveConversationHistory = async (req, res) => {
       // }
   
       return httpResponse(res, 200, "Conversation history retrieved successfully", data);
+    } catch (error) { 
+      return httpResponse(res, 500, "Internal server error");
+    }
+  };
+
+
+  export const searchMessage = async (req, res) => {
+    try {
+      const { userId } = req.user;
+      const search = req?.query?.message.toLowerCase() || '';
+      const receiverId = parseInt(req?.query?.receiverId);
+      const page = parseInt(req?.query?.page) || 1;
+      const count = parseInt(req?.query?.count) || 20;
+      const sort = req?.query?.sort == "asc" ? "asc" : "desc";
+
+      // Validate Request 
+      const result = searchMessageSchema.safeParse({ receiverId, search, count, sort });
+
+      if (!result.success) {
+        return httpResponse(res, 400, "Invalid request parameters", result.error.errors);
+      }
+
+      // Token is not Provided
+      if (!userId)  {
+          return httpResponse(res, 401, "Unauthorized access: No Token Provided");
+      }
+
+      // Search message from Database
+      const messages = await prisma.chatMessages.findMany({
+        skip: (page - 1) * count,
+        take: count,
+        where: {
+          senderId: { in: [userId, receiverId] },
+          receiverId: { in: [userId, receiverId] },
+          content: {
+            contains: search,
+          },
+          isDeleted: false
+        },
+        include: {
+          sender: {
+            select: {
+              name: true
+            }
+          },
+          receiver: {
+            select: {
+              name: true
+            }
+          }
+        },
+        orderBy: {
+          createdAt: sort,
+        },  
+      })
+     
+      // Message Page Count
+      const messageCount = await prisma.chatMessages.count({
+        where: {
+          senderId: { in: [userId, receiverId] },
+          receiverId: { in: [userId, receiverId] },
+          content: {
+            contains: search,
+          },
+          isDeleted: false
+        },
+      });
+
+      const totalPage = Math.ceil(messageCount / count);
+      const currentPage = page;
+
+      const data = {
+        messages: messages,
+        totalPage: totalPage,
+        currentPage: currentPage
+      }
+
+      return httpResponse(res, 200, "Search result retrieved successfully", data);
     } catch (error) { 
       return httpResponse(res, 500, "Internal server error");
     }
