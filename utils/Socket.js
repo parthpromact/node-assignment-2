@@ -37,7 +37,7 @@ const socketHandler = (server) => {
     });
 
     // Event Listen When Socket Disconnect
-    socket.on("disconnect", () => {
+    socket.on("disconnection", () => {
       for (const userId in onlineUsers) {
         // Socket Id matched with disconnected User Remove it from Online Users
         if (onlineUsers[userId] == socket.id) {
