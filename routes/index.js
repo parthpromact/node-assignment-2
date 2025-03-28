@@ -1,5 +1,5 @@
 import express from 'express';
-import { getGoogleAuthUrl, getUsers, handleGoogleCallback, login, register } from '../Controller/UserController.js';
+import { getGoogleAuthUrl, getUsers, handleGoogleCallback, handleGoogleLoginSignUps, login, register } from '../Controller/UserController.js';
 import { tokenChecker } from '../middleware/tokenChecker.js';
 import { deleteMessage, editMessage, retrieveConversationHistory, searchMessage, sendMessage } from '../Controller/MessageController.js';
 import { requestLogger } from '../middleware/requestLogger.js';
@@ -39,5 +39,8 @@ router.get('/login-callback', handleGoogleCallback);
 
 // Search Message
 router.get('/conversation/search', tokenChecker, requestLogger, searchMessage);
+
+// Handle google credentials
+router.post('/google-creds', handleGoogleLoginSignUps);
 
 export default router;

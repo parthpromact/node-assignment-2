@@ -235,6 +235,82 @@ export const handleGoogleCallback = async (req, res) => {
   }
 };
 
+export const handleGoogleLoginSignUps = async (req, res) => {
+  try {
+    const { token, type } = req.body;
+
+    // Verify the token
+    const ticket = await oauth2Client.verifyIdToken({
+      idToken: token,
+      audience: process.env.GOOGLE_CLIENT_ID
+    });
+
+    // Get the payload from the verified token
+    const payload = ticket.getPayload();
+    const { 
+      email, 
+      name, 
+      sub: googleId, 
+      email_verified: emailVerified 
+    } = payload;
+
+    // Verify email
+    if (!email || !emailVerified) {
+      return httpResponse(res, 400, "Invalid Google authentication");
+    }
+
+    // Your existing user creation/login logic
+    let existingUser = await getUserByEmail(email);
+
+    // if user is already registered and request is for register validation
+    if(existingUser && type === 'register') {
+      return httpResponse(res, 200, "You're already registered! Please Login");
+    }
+
+    // if user is already registered and request is for login 
+    if (existingUser && type === 'login') {
+      existingUser = await updateUser({
+        email,
+        name,
+        googleId
+      }, existingUser.id);
+    }
+
+    // if user is not registered and request is for register
+    if ((!Object.keys(existingUser).length || !existingUser) && type === 'register') {
+      existingUser = await createUser({
+        email,
+        name,
+        googleId
+      });
+    } 
+
+    // if user is not registered and request is for login validation
+    if(!existingUser && type === 'login') {
+      return httpResponse(res, 200, "You're not registered! Please Register");
+    }
+
+    // Generate JWT token
+    let userData = {
+      userId: existingUser.id,
+      email: existingUser.email,
+      name: existingUser.name
+  }
+
+  const tokens = jwt.sign(
+    { userData }, 
+    process.env.JWT_SECRET,
+    { expiresIn: process.env.JWT_EXPIRES_IN }
+  )
+    // Redirect with token
+    return httpResponse(res, 200, "Google Logged In Successfully", type == 'register' ? userData : { tokens, userData });
+
+  } catch (error) {
+    console.error('Google Callback Error:', error);
+    return res.redirect(`http://localhost:3000/login?error=${encodeURIComponent(error.message)}`);
+  }
+};
+
 
 
 
