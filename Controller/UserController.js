@@ -277,7 +277,7 @@ export const handleGoogleLoginSignUps = async (req, res) => {
     }
 
     // if user is not registered and request is for register
-    if ((!Object.keys(existingUser).length || !existingUser) && type === 'register') {
+    if (!existingUser && type == 'register') {
       existingUser = await createUser({
         email,
         name,

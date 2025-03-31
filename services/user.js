@@ -7,7 +7,8 @@ export const createUser = async (data) => {
       data: {
         email: data.email,
         name: data.name,
-        password: data.password,
+        password: data?.password,
+        googleId: data?.googleId
       },
     });
     
